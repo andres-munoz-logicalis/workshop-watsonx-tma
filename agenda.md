@@ -71,9 +71,9 @@
 
 ### 12:30 - 14:00 | Almuerzo
 
-### 14:00 - 16:00 | Ejercicios con IBM BOB
+### 14:00 - 15:00 | Governance
 
-### 
+### 15:00 - 16:00 | Ejercicios con IBM BOB
 
 ### 16:00 - 16:30 | Recap ecosistema y buenas prácticas
 
