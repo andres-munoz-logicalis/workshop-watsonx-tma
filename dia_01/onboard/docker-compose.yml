@@ -1,0 +1,13 @@
+services:
+  workshop:
+    build: .
+    container_name: workshop-watsonx
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./certs:/app/certs
+      - ./notebooks:/app/notebooks
+      - ./scripts:/app/scripts
+    env_file:
+      - .env
+    restart: unless-stopped
