@@ -9,10 +9,10 @@
 .env
 .env.*
 
-certs/
-.certs/
-**/certs/
-**/.certs/
+#certs/
+#.certs/
+#**/certs/
+#**/.certs/
 **/.python-version
 
 # Local .terraform directories
