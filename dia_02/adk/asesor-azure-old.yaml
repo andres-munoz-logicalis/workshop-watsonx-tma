@@ -1,0 +1,124 @@
+kind: native
+name: asesor_azure_2164gx
+display_name: asesor-azure
+description: asesor-azure
+context_access_enabled: true
+context_variables: []
+restrictions: editable
+memory_enabled: false
+supported_apps: []
+llm: groq/openai/gpt-oss-120b
+style: default
+hide_reasoning: false
+instructions: |-
+  You are an Azure architecture and cost advisor.
+
+  ALWAYS respond in the same language the user writes in.
+
+  ROUTING RULES — follow these exactly:
+  - If the user needs help choosing a service → call azure-cu01
+    immediately, do not ask clarifying questions first.
+  - If the user wants a cost estimate and already knows the
+    service → call azure-cu02 immediately.
+  - If azure-cu01 finishes with a recommendation and the user
+    wants pricing → call azure-cu02 passing:
+    * The recommended service name
+    * The region if mentioned during the conversation
+    * Any technical parameters collected during deep_dive
+      (memory, executions, duration, SKU, etc.)
+  - If the user intent is unclear → call azure-cu01 by default.
+    It is better to start the decision tree than to ask
+    clarifying questions yourself.
+
+  DELEGATION RULES:
+  - When delegating to azure-cu01, pass ONLY the raw user message.
+    DO NOT add context, summaries, or interpretations.
+  - Always pass the full conversation context when switching between
+    sub-agents so the user never has to repeat information.
+  - DO NOT answer architecture or pricing questions yourself.
+    Always delegate to the appropriate sub-agent.
+guidelines: []
+collaborators:
+- azure_cu02_8212q5
+- azure_cu01_1538xX
+tools: []
+toolkits: []
+plugins:
+  agent_pre_invoke: []
+  agent_post_invoke: []
+knowledge_base: []
+chat_with_docs:
+  enabled: false
+  supports_full_document: true
+  vector_index:
+    chunk_size: 400
+    chunk_overlap: 50
+    limit: 10
+    extraction_strategy: express
+  generation:
+    prompt_instruction: ''
+    max_docs_passed_to_llm: 5
+    generated_response_length: Moderate
+    display_text_no_results_found: I searched my knowledge base, but did not find
+      anything related to your query
+    display_text_connectivity_issue: I might have information related to your query
+      to share, but am unable to connect to my knowledge base at the moment
+    idk_message: I'm afraid I don't understand. Please rephrase your question.
+    enabled: false
+  query_rewrite:
+    enabled: true
+  confidence_thresholds:
+    retrieval_confidence_threshold: Lowest
+    response_confidence_threshold: Lowest
+  citations:
+    citation_title: How do we know?
+    citations_shown: -1
+  hap_filtering:
+    output:
+      enabled: false
+      threshold: 0.5
+  query_source: Agent
+  agent_query_description: The query to search for in the knowledge base
+starter_prompts:
+  is_default_prompts: false
+  prompts:
+  - id: a526a7cc-6a8a-4120-a2d6-82bd1cdc6b49
+    title: No sé si usar VMs, contenedores o serverless para mi proyecto
+    subtitle: ''
+    prompt: No sé si usar VMs, contenedores o serverless para mi proyecto
+    state: active
+  - id: bec4e617-273d-4c27-8a5c-7380da5540c3
+    title: Necesito desplegar microservicios con alta disponibilidad
+    subtitle: ''
+    prompt: Necesito desplegar microservicios con alta disponibilidad
+    state: active
+  - id: 858b7164-1cd9-473a-b8e9-6e0cb66682bd
+    title: Cotizame una Azure Function en eastus, 5M ejecuciones/mes
+    subtitle: ''
+    prompt: Cotizame una Azure Function en eastus, 5M ejecuciones/mes
+    state: active
+  - id: c78e12d0-1f94-480a-8a26-7b717a125887
+    title: 'No sé si usar VMs, contenedores o serverless para mi app   '
+    subtitle: ''
+    prompt: 'No sé si usar VMs, contenedores o serverless para mi app   '
+    state: active
+  - id: default0
+    title: Necesito ayuda para elegir un servicio Azure
+    subtitle: ''
+    prompt: Necesito ayuda para elegir un servicio Azure
+    state: active
+  - id: default1
+    title: Tengo dudas sobre que servicio de azure y precio voy a necesitar
+    subtitle: ''
+    prompt: Tengo dudas sobre que servicio de azure y precio voy a necesitar
+    state: active
+  - id: default2
+    title: Quiero cotizar la infraestructura para mi aplicación
+    subtitle: ''
+    prompt: Quiero cotizar la infraestructura para mi aplicación
+    state: active
+welcome_content:
+  welcome_message: Soy el asistente de azure
+  description: Accuracy of generated answers may vary. Please double-check responses.
+  is_default_message: false
+spec_version: v1

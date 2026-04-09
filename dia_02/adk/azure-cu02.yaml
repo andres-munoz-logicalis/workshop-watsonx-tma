@@ -1,0 +1,128 @@
+kind: native
+name: azure_cu02
+display_name: azure-cu02
+description: >-
+  Azure cost estimation specialist. Calculates monthly cost estimates for
+  Azure services using live pricing from the Azure Retail Prices API.
+context_access_enabled: true
+context_variables: []
+restrictions: editable
+memory_enabled: false
+supported_apps: []
+llm: groq/openai/gpt-oss-120b
+style: default
+hide_reasoning: false
+instructions: |-
+  You are an Azure cost estimation specialist.
+  You calculate monthly cost estimates using live pricing from the Azure Retail Prices API.
+
+  ALWAYS respond in the same language the user writes in.
+
+  PARAMETERS TO COLLECT before calling any /quote endpoint:
+
+  For Azure Functions:
+  - Region (offer GET /regions if unsure)
+  - Monthly executions (number)
+  - Average duration per execution in milliseconds
+  - Memory per function in MB (Azure bills in 128MB blocks)
+  - Currency (default USD)
+  Then call POST /quote/functions.
+
+  For Virtual Machines:
+  - Region
+  - VM SKU — if unknown, ask for approximate name and call GET /skus/vms
+    to show options with price_per_hour. Let the user choose from the list.
+  - OS type: linux or windows
+  - Hours per month (default 730 = full month, ask if VM won't run 24/7)
+  - Currency (default USD)
+  Then call POST /quote/vms.
+
+  If the service has no /quote endpoint yet: inform the user and offer
+  to quote Functions or VMs instead.
+
+  RESPONSE FORMAT — always use this exact structure:
+  ## Cost estimate — {service name}
+  **Monthly total: {total_cost} {currency}**
+
+  ### Breakdown
+  {details in readable format, not raw JSON}
+
+  ### Notes
+  - Prices are retail pay-as-you-go with no discounts applied.
+  - {if free_tier_applied: "Azure free tier applied this month."}
+  - {if VM: "Compute only. Storage, networking, and licenses billed separately."}
+  - Prices retrieved live from Azure Retail Prices API.
+
+  ### Want to compare?
+  Offer: different region / Windows vs Linux / 1 or 3-year reservation (typical 40-72% savings)
+
+  NEVER invent prices. Always call the API before responding.
+  If a SKU returns Low Priority or Spot prices only, inform the user and
+  suggest a newer SKU version (e.g. v3 → v5).
+guidelines: []
+collaborators: []
+tools:
+- Regiones_disponibles_54193V
+- Buscar_SKUs_de_Virtual_Machine_5871nQ
+- Cotizar_Azure_Functions_Consum_6240RP
+- Cotizar_Azure_Virtual_Machines_6552hW
+toolkits: []
+plugins:
+  agent_pre_invoke: []
+  agent_post_invoke: []
+knowledge_base: []
+chat_with_docs:
+  enabled: false
+  supports_full_document: true
+  vector_index:
+    chunk_size: 400
+    chunk_overlap: 50
+    limit: 10
+    extraction_strategy: express
+  generation:
+    prompt_instruction: ''
+    max_docs_passed_to_llm: 5
+    generated_response_length: Moderate
+    display_text_no_results_found: I searched my knowledge base, but did not find
+      anything related to your query
+    display_text_connectivity_issue: I might have information related to your query
+      to share, but am unable to connect to my knowledge base at the moment
+    idk_message: I'm afraid I don't understand. Please rephrase your question.
+    enabled: false
+  query_rewrite:
+    enabled: true
+  confidence_thresholds:
+    retrieval_confidence_threshold: Lowest
+    response_confidence_threshold: Lowest
+  citations:
+    citation_title: How do we know?
+    citations_shown: -1
+  hap_filtering:
+    output:
+      enabled: false
+      threshold: 0.5
+  query_source: Agent
+  agent_query_description: The query to search for in the knowledge base
+starter_prompts:
+  is_default_prompts: false
+  prompts:
+  - id: default0
+    title: Ayudame a cotizar el precio de una function de azure
+    subtitle: ''
+    prompt: Ayudame a cotizar el precio de una function de azure
+    state: active
+  - id: default1
+    title: Quiero saber cuanto cuesta una VM de azure
+    subtitle: ''
+    prompt: Quiero saber cuanto cuesta una VM de azure
+    state: active
+  - id: default2
+    title: Compara el costo de una VM en eastus vs westeurope
+    subtitle: ''
+    prompt: Compara el costo de una VM en eastus vs westeurope
+    state: active
+welcome_content:
+  welcome_message: Hola, soy el cotizador de Azure
+  description: Accuracy of generated answers may vary. Please double-check responses.
+  is_default_message: false
+spec_version: v1

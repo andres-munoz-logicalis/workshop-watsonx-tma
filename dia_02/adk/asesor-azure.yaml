@@ -1,0 +1,114 @@
+kind: native
+name: asesor_azure
+display_name: asesor-azure
+description: >-
+  Azure architecture and cost advisor. Routes users to the right specialist:
+  azure-cu01 for service selection and azure-cu02 for cost estimation.
+context_access_enabled: true
+context_variables: []
+restrictions: editable
+memory_enabled: false
+supported_apps: []
+llm: watsonx/meta-llama/llama-3-3-70b-instruct
+style: default
+hide_reasoning: false
+instructions: |-
+  You are an Azure architecture and cost advisor.
+  Your role is to route user requests to the right specialist agent.
+  You do not answer architecture or pricing questions yourself.
+
+  Respond in the same language the user writes in.
+
+  ## Routing rules
+
+  If the user needs help choosing a service, call azure_cu01 immediately.
+  Do not ask clarifying questions first — the decision tree handles that.
+
+  If the user wants a cost estimate and already knows the service,
+  call azure_cu02 immediately.
+
+  If azure_cu01 finishes with a recommendation and the user wants pricing,
+  call azure_cu02 and pass the following context:
+  - The recommended service name
+  - The region if mentioned during the conversation
+  - Any technical parameters collected during deep_dive
+
+  If the user intent is unclear, call azure_cu01 by default.
+
+  ## Delegation rules
+
+  When delegating to azure_cu01, pass only the raw user message.
+  Do not add context, summaries, or interpretations.
+
+  Once you transfer to a sub-agent, do not intervene until the
+  sub-agent explicitly signals it has finished. While a sub-agent
+  is active, pass every user message directly to that sub-agent
+  without processing or re-routing it yourself.
+
+  Always pass the full conversation context when switching between
+  sub-agents so the user never has to repeat information.
+guidelines: []
+collaborators:
+- azure_cu02
+- azure_cu01
+tools: []
+toolkits: []
+plugins:
+  agent_pre_invoke: []
+  agent_post_invoke: []
+knowledge_base: []
+chat_with_docs:
+  enabled: false
+  supports_full_document: true
+  vector_index:
+    chunk_size: 400
+    chunk_overlap: 50
+    limit: 10
+    extraction_strategy: express
+  generation:
+    prompt_instruction: ''
+    max_docs_passed_to_llm: 5
+    generated_response_length: Moderate
+    display_text_no_results_found: I searched my knowledge base, but did not find
+      anything related to your query
+    display_text_connectivity_issue: I might have information related to your query
+      to share, but am unable to connect to my knowledge base at the moment
+    idk_message: I'm afraid I don't understand. Please rephrase your question.
+    enabled: false
+  query_rewrite:
+    enabled: true
+  confidence_thresholds:
+    retrieval_confidence_threshold: Lowest
+    response_confidence_threshold: Lowest
+  citations:
+    citation_title: How do we know?
+    citations_shown: -1
+  hap_filtering:
+    output:
+      enabled: false
+      threshold: 0.5
+  query_source: Agent
+  agent_query_description: The query to search for in the knowledge base
+starter_prompts:
+  is_default_prompts: false
+  prompts:
+  - id: default0
+    title: No sé si usar VMs, contenedores o serverless para mi proyecto
+    subtitle: ''
+    prompt: No sé si usar VMs, contenedores o serverless para mi proyecto
+    state: active
+  - id: default1
+    title: Cotizame una Azure Function en eastus, 5M ejecuciones/mes
+    subtitle: ''
+    prompt: Cotizame una Azure Function en eastus, 5M ejecuciones/mes
+    state: active
+  - id: default2
+    title: Necesito desplegar microservicios con alta disponibilidad
+    subtitle: ''
+    prompt: Necesito desplegar microservicios con alta disponibilidad
+    state: active
+welcome_content:
+  welcome_message: Soy el asistente de Azure
+  description: Accuracy of generated answers may vary. Please double-check responses.
+  is_default_message: false
+spec_version: v1

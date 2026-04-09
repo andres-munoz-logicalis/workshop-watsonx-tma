@@ -1,0 +1,97 @@
+kind: native
+name: asesor_azure_granite
+display_name: asesor-azure-granite
+description: >-
+  Azure architecture and cost advisor powered by IBM Granite.
+  Routes users to the right specialist: azure-cu01 for service
+  selection and azure-cu02 for cost estimation.
+context_access_enabled: true
+context_variables: []
+restrictions: editable
+memory_enabled: false
+supported_apps: []
+llm: watsonx/ibm/granite-4-h-small
+style: default
+hide_reasoning: false
+instructions: |-
+  You are an Azure architecture and cost advisor.
+  Route user requests to the appropriate specialist. Do not answer directly.
+
+  Respond in the same language the user writes in.
+
+  Routes:
+  1. User needs help choosing a service → call azure-cu01. No clarifying questions.
+  2. User wants a cost estimate and knows the service → call azure-cu02.
+  3. azure-cu01 recommends a service and user wants pricing → call azure-cu02
+     with: service name, region, and any parameters from the conversation.
+  4. Intent unclear → call azure-cu01 by default.
+
+  When calling azure-cu01: pass only the user's exact message, unmodified.
+  When switching agents: include full conversation context so the user
+  does not need to repeat themselves.
+  Do not answer architecture or pricing questions yourself.
+guidelines: []
+collaborators:
+- azure_cu02
+- azure_cu01
+tools: []
+toolkits: []
+plugins:
+  agent_pre_invoke: []
+  agent_post_invoke: []
+knowledge_base: []
+chat_with_docs:
+  enabled: false
+  supports_full_document: true
+  vector_index:
+    chunk_size: 400
+    chunk_overlap: 50
+    limit: 10
+    extraction_strategy: express
+  generation:
+    prompt_instruction: ''
+    max_docs_passed_to_llm: 5
+    generated_response_length: Moderate
+    display_text_no_results_found: I searched my knowledge base, but did not find
+      anything related to your query
+    display_text_connectivity_issue: I might have information related to your query
+      to share, but am unable to connect to my knowledge base at the moment
+    idk_message: I'm afraid I don't understand. Please rephrase your question.
+    enabled: false
+  query_rewrite:
+    enabled: true
+  confidence_thresholds:
+    retrieval_confidence_threshold: Lowest
+    response_confidence_threshold: Lowest
+  citations:
+    citation_title: How do we know?
+    citations_shown: -1
+  hap_filtering:
+    output:
+      enabled: false
+      threshold: 0.5
+  query_source: Agent
+  agent_query_description: The query to search for in the knowledge base
+starter_prompts:
+  is_default_prompts: false
+  prompts:
+  - id: default0
+    title: No sé si usar VMs, contenedores o serverless para mi proyecto
+    subtitle: ''
+    prompt: No sé si usar VMs, contenedores o serverless para mi proyecto
+    state: active
+  - id: default1
+    title: Cotizame una Azure Function en eastus, 5M ejecuciones/mes
+    subtitle: ''
+    prompt: Cotizame una Azure Function en eastus, 5M ejecuciones/mes
+    state: active
+  - id: default2
+    title: Necesito desplegar microservicios con alta disponibilidad
+    subtitle: ''
+    prompt: Necesito desplegar microservicios con alta disponibilidad
+    state: active
+welcome_content:
+  welcome_message: Soy el asistente de Azure — powered by IBM Granite
+  description: Accuracy of generated answers may vary. Please double-check responses.
+  is_default_message: false
+spec_version: v1
