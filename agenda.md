@@ -27,11 +27,11 @@
 
 ### 11:00 - 12:30 | Onboarding Watsonx suite IBM
 
-- watsonx.ai: acceso, crear proyecto, Prompt Lab, primer llamado a API. Todos con una API key funcionando
-- SDK / librería Python: el mismo llamado desde código. (Ejercicio para correr un primer notebook)
-- watsonx.data + Milvus: navegar la interfaz, entender la estructura
-- Elasticsearch: conexión, índice de ejemplo, primera búsqueda
 - Orchestrate: abrir la interfaz, ver un agente de ejemplo precargado, tools y knowledge base
+- Watsonx.AI: acceso, crear proyecto, Prompt Lab, primer llamado a API. Todos con una API key funcionando
+- Governance: Review de governance, conceptos, uso y demo
+- [Opcional] SDK / librería Python: el mismo llamado desde código. (Ejercicio para correr un primer notebook)
+- [Opcional] Elasticsearch: conexión, índice de ejemplo, primera búsqueda
 
 ### 12:30 - 14:00 | Almuerzo
 
@@ -72,6 +72,8 @@
 ### 12:30 - 14:00 | Almuerzo
 
 ### 14:00 - 16:00 | Ejercicios con IBM BOB
+
+### 
 
 ### 16:00 - 16:30 | Recap ecosistema y buenas prácticas
 
