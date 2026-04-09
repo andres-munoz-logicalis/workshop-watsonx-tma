@@ -1,0 +1,1055 @@
+# Base de conocimiento — CU-01 Árbol de decisión (v2)
+#
+# Tipos de nodo:
+#   - "question"  : Bifurcaciones del árbol de decisión.
+#   - "deep_dive" : Cuestionario profundo de un servicio. Todas sus preguntas
+#                   se resuelven en una sola fase INTERVIEW y apuntan siempre
+#                   al mismo result vía el campo `next`.
+#   - "result"    : Recomendación final con schema estructurado:
+#                     summary           → descripción corta del servicio
+#                     why_factors       → lista atómica de factores para que
+#                                         el LLM arme un racional personalizado
+#                     key_considerations → consideraciones operativas
+#                     pricing           → dict {model, notes, example_monthly_usd}
+#                     docs_url          → link a la doc oficial
+#                     handoff           → payload para el siguiente agente (CU-02)
+
+nodes:
+
+  # ============================================================
+  # PREGUNTAS (TRIAGE)
+  # ============================================================
+
+  - _id: node_start
+    type: question
+    question: "¿Es una aplicación nueva?"
+    context: "Ayuda a identificar el modelo de ejecución más adecuado."
+    options:
+      - label: "Si, es una aplicacion nueva"
+        next: node_nano_servicios_check
+      - label: "No, esta aplicacion ya existe"
+        next: node_migracion
+
+  - _id: node_nano_servicios_check
+    type: question
+    question: "¿La aplicacion puede ser descompuesta en nano servicios?"
+    context: "Facilita saber si puede ser desplegada como nano servicios que son segmentos de codigo de tarea especificas, de corta ejecucion y basado en eventos"
+    options:
+      - label: "Si, se puede descomponer en pequeños nano servicios"
+        next: deep_functions
+      - label: "No es posible"
+        next: node_app_services_check
+
+  - _id: node_app_services_check
+    type: question
+    question: "¿La aplicacion requiere de los servicios de una plataforma web?"
+    context: "Permite conocer si es una aplicación web o una aplicacion contenerizada"
+    options:
+      - label: "Sí, se requiere una web app"
+        next: deep_app_services
+      - label: "No, no se requiere una plataforma web"
+        next: node_container_instance_check
+
+  - _id: node_container_instance_check
+    type: question
+    question: "¿La aplicacion requiere escalado, equilibrio de carga y soporte de multiples contenedores?"
+    context: "Nos ayuda a identificar si es necesario tener un nivel escalado, soporte de carga y orquestacion"
+    options:
+      - label: "Sí, requiere caracteristicas de escalado y load balancing avanzadas"
+        next: node_container_apps_check
+      - label: "No requiere estas caracteristicas"
+        next: deep_container_instances
+
+  - _id: node_container_apps_check
+    type: question
+    question: "¿Se necesita acceso a las APIs de Kubernetes y a su plano de control"
+    context: "Facilita reconocer si es posible utilizar un servicio serverless de Kubernetes"
+    options:
+      - label: "Sí se necesita acceso a las APIs de Kubernetes"
+        next: node_openshift_check
+      - label: "No es necesario, se puede ejecutar en un servicio serverless"
+        next: deep_container_apps
+
+  - _id: node_openshift_check
+    type: question
+    question: "¿Usa Red Hat Openshift Container Platform?"
+    context: "Define si se necesita Openshift o si se puede ejecutar sobre AKS"
+    options:
+      - label: "Sí, utiliza Openshift"
+        next: deep_openshift
+      - label: "No necesita Openshift"
+        next: deep_aks
+
+  - _id: node_migracion
+    type: question
+    question: "¿Es una aplicación que se va a migrar?"
+    context: "Permite conocer si es una aplicación a optimizar siguiendo la metodologia de los 12 factores"
+    options:
+      - label: "Sí, voy a migrarla"
+        next: node_nano_servicios_check
+      - label: "No"
+        next: node_vm_check
+
+  - _id: node_vm_check
+    type: question
+    question: "¿La aplicación usa alguna tecnología legada (C++, EJB, ASP o similar)?"
+    context: "Ayuda a entender si la aplicación puede ser transferida sin realizar modificaciones y optimizaciones significativas"
+    options:
+      - label: "Sí, utiliza un stack legado (framework, lenguaje o tecnologia)"
+        next: deep_vm
+      - label: "No"
+        next: node_container
+
+  - _id: node_container
+    type: question
+    question: "¿Puede ser contenerizada?"
+    context: "Ayuda a reconocer si dicha aplicación puede desplegarse como container"
+    options:
+      - label: "Sí, la aplicación puede contenerizarse"
+        next: node_nano_servicios_check
+      - label: "No"
+        next: node_web_app_distribuida
+
+  - _id: node_web_app_distribuida
+    type: question
+    question: "¿Esta aplicacion puede ser distribuida como una coleccion de componentes que juntos constituyen una aplicacion web?"
+    context: "Define si la aplicación es una web app de componentes distribuidos o un stack monolitico"
+    options:
+      - label: "Sí es una web app distribuida"
+        next: deep_app_services
+      - label: "No es distribuida"
+        next: deep_vm
+
+  # ============================================================
+  # DEEP DIVES (INTERVIEW)
+  # ============================================================
+
+  # Azure Functions
+  - _id: deep_functions
+    type: deep_dive
+    service: "Azure Function App"
+    next: result_function_app
+    sections:
+
+      - section: "Propósito y Uso"
+        questions:
+          - id: proposito_uso
+            text: "¿Para qué vas a usar Azure Function?"
+            hint: "Ejemplos: transformar datos en tiempo real, procesar archivos subidos, programar tareas, procesar eventos"
+
+          - id: ejecucion_constante
+            text: "¿Necesitás una ejecución constante o puede ser event-driven?"
+
+          - id: procesos_complejos
+            text: "¿Necesitás ejecutar procesos complejos que requieran estado, coordinación o dependencias temporales?"
+            hint: "Si la respuesta es Sí, probablemente necesites Durable Functions"
+
+          - id: subtareas_paralelas
+            text: "¿Necesitás dividir una tarea en múltiples subtareas paralelas y consolidar los resultados al final?"
+            required: false
+
+          - id: eventos_externos
+            text: "¿Necesitás recibir eventos externos antes de completar el proceso?"
+            required: false
+
+      - section: "Plan de Hosting"
+        questions:
+          - id: latencia_arranque
+            text: "¿Qué tan rápido necesitás que se ejecute la función? ¿Cuánto tráfico o volumen de eventos esperás recibir?"
+
+          - id: cold_start
+            text: "¿Los tiempos de inicio en frío son un problema? ¿Necesitás evitar tiempos de inicio en frío?"
+            hint: "En caso de que si considerar Premium Plan"
+
+          - id: escala_automatica
+            text: "¿Necesitás que la función escale automáticamente según la demanda? ¿Cuántas ejecuciones simultáneas esperás manejar?"
+
+          - id: vnet_premium
+            text: "¿Vas a necesitar integración con una VNET o características avanzadas que solo están en el plan Premium?"
+            hint: >
+              Planes disponibles:
+              Consumption (pay-per-use, escala automática),
+              Premium (better performance, sin inicio frío),
+              Dedicated (constant availability, costos elevados)
+
+      - section: "Integraciones y Triggers"
+        questions:
+          - id: trigger_tipo
+            text: "¿Qué evento activará tu función?"
+            hint: "HTTP, Timer, Event Hub, Blob Storage, Queue, CosmosDB, Kafka, etc."
+
+          - id: bindings
+            text: "¿Necesitás que tu función interactúe con otros servicios de Azure mediante bindings?"
+            hint: "Event Grid, Logic Apps, API Management, Azure Cosmos DB, Service Bus, etc."
+            required: false
+
+      - section: "Lenguaje y Desarrollo"
+        questions:
+          - id: lenguaje
+            text: "¿En qué lenguaje de programación se desarrollará la función?"
+            hint: "C#, JavaScript/TypeScript, Python, Java, PowerShell, Go"
+
+          - id: debug_local
+            text: "¿Cómo vas a depurar y probar la función localmente?"
+            required: false
+
+          - id: codigo_fuente
+            text: "¿Dónde reside el código fuente?"
+            hint: "GitHub, Azure DevOps, GitLab, local"
+
+          - id: cicd
+            text: "¿Cómo integrarás la función al flujo de CI/CD?"
+            required: false
+
+      - section: "Seguridad y Cumplimiento"
+        questions:
+          - id: autenticacion
+            text: "¿Cómo se autenticará el acceso a la función?"
+            hint: "Managed Identity, API Key, OAuth"
+
+          - id: acceso_red
+            text: "¿Necesitás restringir el acceso a nivel de red?"
+            hint: "VNET, Private Endpoints"
+            required: false
+
+          - id: permisos_datos
+            text: "¿Cómo se manejarán los permisos sobre los datos accedidos por la función?"
+
+      - section: "Monitoreo y Mantenimiento"
+        questions:
+          - id: monitoreo
+            text: "¿Cómo monitorearás el rendimiento y los errores de la función?"
+            hint: "Application Insights, Logs"
+            required: false
+
+          - id: alertas
+            text: "¿Necesitás establecer alertas en caso de fallos o degradación del servicio?"
+            required: false
+
+          - id: recuperacion
+            text: "¿Qué estrategias de recuperación aplicarás si la función falla?"
+            required: false
+
+      - section: "Persistencia y Estado"
+        questions:
+          - id: estado
+            text: "¿La función necesita mantener estado o puede ser completamente stateless?"
+
+          - id: durable_functions
+            text: "¿Vas a necesitar Durable Functions para gestionar flujos de trabajo o coordinación de eventos?"
+
+          - id: almacenamiento
+            text: "¿Dónde almacenarás la información que necesite persistir?"
+            hint: "CosmosDB, Blob Storage, etc."
+
+
+  # Azure Virtual Machines
+  - _id: deep_vm
+    type: deep_dive
+    service: "Azure Virtual Machines"
+    next: result_vm
+    sections:
+
+      - section: "Propósito y Uso"
+        questions:
+          - id: vm_proposito
+            text: "¿Para qué vas a usar la VM?"
+            hint: "Aplicaciones empresariales, bases de datos, procesamiento de datos, etc."
+
+          - id: vm_criticidad
+            text: "¿Es una carga de trabajo crítica o puede tolerar tiempos de inactividad?"
+
+      - section: "Escalabilidad y Disponibilidad"
+        questions:
+          - id: vm_carga_variable
+            text: "¿La carga de trabajo varía en el tiempo o es estable?"
+
+          - id: vm_autoscaling
+            text: "¿Vas a usar escalado automático?"
+
+          - id: vm_disponibilidad
+            text: "¿Requerís disponibilidad en múltiples regiones o zonas?"
+
+      - section: "Red y Seguridad"
+        questions:
+          - id: vm_trafico_red
+            text: "¿Cómo será el tráfico de red?"
+            hint: "Interno, externo, mixto"
+
+          - id: vm_load_balancer
+            text: "¿Se requiere balanceador de carga o firewall?"
+
+          - id: vm_politicas_seguridad
+            text: "¿Qué políticas de seguridad y acceso necesitás aplicar?"
+
+          - id: vm_ip_publica
+            text: "¿Requiere una IP pública? ¿Se accederá a través de un bastión?"
+            required: false
+
+      - section: "Requisitos de CPU, Memoria y Almacenamiento"
+        questions:
+          - id: vm_cpu
+            text: "¿Qué tan intensivo es el procesamiento?"
+            hint: "Ligero, medio, alto, computación intensiva. ¿Cuántos núcleos de CPU necesita tu aplicación?"
+
+          - id: vm_memoria
+            text: "¿Qué tan intensivo es el uso de memoria?"
+            hint: "Ligero, medio, alto. ¿Cuánta RAM requiere para un funcionamiento óptimo?"
+
+          - id: vm_disco
+            text: "¿Qué tipo de disco necesitás?"
+            hint: "SSD estándar, SSD premium, HDD"
+
+          - id: vm_almacenamiento
+            text: "¿Cuánto almacenamiento requiere tu aplicación? ¿Se requiere almacenamiento persistente o temporal?"
+
+      - section: "Sistema Operativo"
+        questions:
+          - id: vm_so
+            text: "¿Requerís Windows o Linux? ¿Qué versión?"
+
+          - id: vm_imagen
+            text: "¿Necesitás una imagen específica o una personalizada?"
+            required: false
+
+      - section: "Costo y Licenciamiento"
+        questions:
+          - id: vm_licencias
+            text: "¿Requerís alguna licencia especial?"
+            hint: "Windows Server, SQL Server, etc."
+            required: false
+
+          - id: vm_reservada
+            text: "¿Vas a usar una VM reservada para ahorrar costos a largo plazo?"
+            required: false
+
+
+  # Azure App Services
+  - _id: deep_app_services
+    type: deep_dive
+    service: "Azure App Services"
+    next: result_app_services
+    sections:
+
+      - section: "Propósito y Uso"
+        questions:
+          - id: apps_objetivo
+            text: "¿Cuál es el objetivo de la aplicación?"
+
+      - section: "Requisitos de la Aplicación"
+        questions:
+          - id: apps_lenguaje
+            text: "¿En qué lenguaje está desarrollada?"
+            hint: ".NET, Java, Python, Node.js, PHP o Ruby"
+
+          - id: apps_dependencias
+            text: "¿Requiere bases de datos, almacenamiento o integración con otros servicios?"
+
+          - id: apps_env_vars
+            text: "¿Necesita variables de entorno o secretos?"
+            required: false
+
+          - id: apps_autenticacion
+            text: "¿Requiere autenticación con Azure AD, OAuth o JWT?"
+            required: false
+
+      - section: "Requisitos de Escalabilidad y Desempeño"
+        questions:
+          - id: apps_rps
+            text: "¿Cuántas solicitudes por segundo debe manejar?"
+
+          - id: apps_usuarios
+            text: "¿Cuántos usuarios accederán?"
+
+          - id: apps_latencia
+            text: "¿Cuánto tiempo debe tardar la aplicación en responder bajo carga?"
+
+          - id: apps_regiones
+            text: "¿Desde qué regiones acceden los usuarios?"
+            required: false
+
+          - id: apps_escala
+            text: "¿Se ajusta a la demanda o debe estar siempre activo?"
+            hint: "Escalamiento automático vs instancias fijas"
+
+          - id: apps_load_balancer
+            text: "¿Requiere balanceo de carga entre las instancias de la aplicación?"
+            required: false
+
+      - section: "Requisitos de Despliegue y Desarrollo"
+        questions:
+          - id: apps_codigo_fuente
+            text: "¿Dónde reside el código fuente?"
+
+          - id: apps_cicd
+            text: "¿Cómo integrarás la aplicación con el flujo de CI/CD?"
+
+          - id: apps_tipo_deploy
+            text: "¿Qué tipo de despliegue se realizará?"
+            hint: "Basic, Rolling o Blue-Green"
+
+          - id: apps_frecuencia_deploy
+            text: "¿Cuántas veces al día o semana se despliega la aplicación?"
+            required: false
+
+          - id: apps_slots
+            text: "¿Necesita slots de despliegue?"
+            hint: "Staging, producción, rollback"
+            required: false
+
+      - section: "Requisitos de Seguridad y Cumplimiento"
+        questions:
+          - id: apps_acceso_red
+            text: "¿Requiere acceso privado (VNET) o es público en los servicios de la aplicación?"
+
+          - id: apps_https
+            text: "¿Necesita HTTPS con certificados personalizados?"
+            required: false
+
+          - id: apps_gateway
+            text: "¿Puede ser accedida via un Application Gateway?"
+            required: false
+
+
+  # Azure Red Hat OpenShift
+  - _id: deep_openshift
+    type: deep_dive
+    service: "Azure Red Hat OpenShift (ARO)"
+    next: result_openshift
+    sections:
+
+      - section: "Requerimientos del Negocio y Casos de Uso"
+        questions:
+          - id: ocp_objetivo
+            text: "¿Cuál es el objetivo principal del uso?"
+
+          - id: ocp_tipo_apps
+            text: "¿Qué tipo de aplicaciones se desplegarán?"
+            hint: "Microservicios, monolitos, batch jobs, etc."
+
+          - id: ocp_alta_disponibilidad
+            text: "¿Se requiere alta disponibilidad o distribución multi-región?"
+
+      - section: "Arquitectura y Configuración del Clúster"
+        questions:
+          - id: ocp_entornos
+            text: "¿Cuántos entornos se necesitan?"
+            hint: "Desarrollo, testing, producción, DR"
+
+          - id: ocp_version
+            text: "¿Qué versión de OCP se planea utilizar y con qué frecuencia se actualizará?"
+
+          - id: ocp_carga_variable
+            text: "¿La carga de trabajo varía en el tiempo o es estable?"
+
+          - id: ocp_lenguaje
+            text: "¿En qué lenguaje de programación se desarrollarán los servicios?"
+
+          - id: ocp_computo_intensivo
+            text: "¿Se requiere soporte para workloads intensivos en cómputo?"
+
+          - id: ocp_gpu
+            text: "¿Se requiere soporte para GPU?"
+            required: false
+
+          - id: ocp_trafico
+            text: "¿Cuál es el tráfico esperado?"
+
+          - id: ocp_vm_master
+            text: "¿Qué tipo de VM deben usarse para los nodos master?"
+            required: false
+
+          - id: ocp_vm_workers
+            text: "¿Qué tipo de VM deben usarse para los nodos workers? ¿Cuántos workers?"
+
+          - id: ocp_autoscaling_nodos
+            text: "¿Se requiere escalado automático de nodos?"
+
+          - id: ocp_almacenamiento
+            text: "¿Requiere almacenamiento de datos? ¿Tamaño y tipo?"
+            required: false
+
+
+  # Azure Kubernetes Service
+  - _id: deep_aks
+    type: deep_dive
+    service: "Azure Kubernetes Service (AKS)"
+    next: result_aks
+    sections:
+
+      - section: "Requerimientos del Negocio y Casos de Uso"
+        questions:
+          - id: aks_objetivo
+            text: "¿Cuál es el objetivo principal del uso?"
+
+          - id: aks_tipo_apps
+            text: "¿Qué tipo de aplicaciones se desplegarán?"
+            hint: "Microservicios, monolitos, batch jobs, etc."
+
+          - id: aks_alta_disponibilidad
+            text: "¿Se requiere alta disponibilidad o distribución multi-región?"
+
+      - section: "Arquitectura y Configuración del Clúster"
+        questions:
+          - id: aks_entornos
+            text: "¿Cuántos entornos se necesitan?"
+            hint: "Desarrollo, testing, producción, DR"
+
+          - id: aks_version_k8s
+            text: "¿Qué versión de Kubernetes se planea utilizar y con qué frecuencia se actualizará?"
+
+          - id: aks_lenguaje
+            text: "¿En qué lenguaje de programación se desarrollarán los servicios?"
+
+          - id: aks_carga_variable
+            text: "¿La carga de trabajo varía en el tiempo o es estable?"
+
+          - id: aks_nodepools
+            text: "¿Vamos a ejecutar cargas de trabajo en grupos de nodos que comparten las mismas características?"
+            hint: "¿Cuántos nodos se necesitan inicialmente para cada grupo?"
+
+          - id: aks_autoscaling_nodos
+            text: "¿Se requiere escalado automático de nodos?"
+
+          - id: aks_trafico
+            text: "¿Cuál es el tráfico esperado?"
+
+          - id: aks_tipo_vm
+            text: "¿Qué tipo de VM deben usarse para los nodos?"
+            hint: "General purpose, CPU optimizado, GPU, spot instances"
+
+          - id: aks_gpu
+            text: "¿Se requiere soporte para GPU o workloads intensivos en cómputo?"
+            required: false
+
+          - id: aks_windows
+            text: "¿Se necesita soporte para Windows o solo Linux?"
+            required: false
+
+          - id: aks_almacenamiento
+            text: "¿Requiere almacenamiento de datos?"
+            hint: "Azure Files, Azure Disks, Azure Blob. ¿Tamaño?"
+            required: false
+
+      - section: "Redes y Seguridad"
+        questions:
+          - id: aks_modelo_red
+            text: "¿Qué modelo de red se utilizará?"
+            hint: "Azure CNI o Kubenet"
+
+          - id: aks_key_vault
+            text: "¿Se necesita integración con Azure Key Vault para manejo de secretos?"
+            required: false
+
+          - id: aks_exposicion
+            text: "¿Se requiere exponer servicios a internet?"
+            hint: "Ingress Controller, Load Balancer"
+
+          - id: aks_seguridad_pods
+            text: "¿Cómo se manejará la seguridad de los pods?"
+            hint: "RBAC, Azure AD, Network Policies"
+
+      - section: "Escalabilidad y Rendimiento"
+        questions:
+          - id: aks_carga_cluster
+            text: "¿Cuál es la carga esperada en el clúster y cómo se manejarán los picos de tráfico?"
+
+          - id: aks_hpa
+            text: "¿Se usará Auto-Scaling para los nodos y los pods?"
+
+      - section: "Integración con Otros Servicios de Azure"
+        questions:
+          - id: aks_observabilidad
+            text: "¿Cómo se va a manejar la observabilidad?"
+            hint: "Logs, métricas, tracing. Azure Monitor, Prometheus, Grafana"
+
+          - id: aks_bases_datos
+            text: "¿Se utilizarán servicios de base de datos en Azure?"
+            hint: "Azure SQL, CosmosDB, PostgreSQL"
+            required: false
+
+          - id: aks_mensajeria
+            text: "¿Se requiere integración con Azure Service Bus, Event Hubs, Kafka, etc.?"
+            required: false
+
+      - section: "Despliegue y Operación"
+        questions:
+          - id: aks_deploy_herramienta
+            text: "¿Cómo se desplegarán las aplicaciones?"
+            hint: "Helm, Kustomize, ArgoCD, CI/CD"
+
+          - id: aks_estrategia_deploy
+            text: "¿Cómo se manejarán las actualizaciones y despliegues en producción?"
+            hint: "Blue-Green, Rolling Updates, Canary Deployments"
+
+          - id: aks_registry
+            text: "¿Usará un Container Registry para desplegar los servicios? ¿Cuál?"
+            required: false
+
+
+  # Azure Container Apps
+  - _id: deep_container_apps
+    type: deep_dive
+    service: "Azure Container Apps"
+    next: result_container_apps
+    sections:
+
+      - section: "Arquitectura de la Aplicación"
+        questions:
+          - id: ca_arquitectura
+            text: "¿Es una aplicación monolítica o basada en microservicios?"
+
+          - id: ca_escala_horizontal
+            text: "¿Se debe escalar horizontalmente?"
+
+          - id: ca_trafico
+            text: "¿Cuánto tráfico o volumen esperás recibir? ¿Número mínimo de réplicas?"
+
+          - id: ca_comunicacion
+            text: "¿Requiere comunicación entre servicios no Azure?"
+            hint: "HTTP, gRPC, mensajería"
+            required: false
+
+      - section: "Requisitos de Infraestructura"
+        questions:
+          - id: ca_contenedores
+            text: "¿Qué tipo de contenedores usarás?"
+            hint: "Docker, OCI"
+
+          - id: ca_recursos
+            text: "¿Cuánta CPU y memoria necesita cada instancia?"
+
+          - id: ca_gpu
+            text: "¿Requerís GPU para su procesamiento?"
+            required: false
+
+      - section: "Almacenamiento y Persistencia"
+        questions:
+          - id: ca_persistencia
+            text: "¿Necesita persistencia de datos?"
+            hint: "Volúmenes montados, Azure Files, Blob Storage"
+
+          - id: ca_base_datos
+            text: "¿Requiere una base de datos externa?"
+            hint: "Azure Cosmos DB, PostgreSQL, MySQL, SQL Server"
+            required: false
+
+      - section: "Red y Exposición del Servicio"
+        questions:
+          - id: ca_exposicion
+            text: "¿Debe ser accesible desde Internet o solo dentro de una red privada?"
+
+          - id: ca_dominio
+            text: "¿Necesita un dominio personalizado o funciona con el dominio de Azure?"
+            required: false
+
+          - id: ca_gateway
+            text: "¿Se requiere integración con Azure Front Door o API Gateway?"
+            required: false
+
+      - section: "Seguridad y Autenticación"
+        questions:
+          - id: ca_autenticacion
+            text: "¿Cómo manejarás la autenticación?"
+            hint: "Azure AD, JWT, OAuth2"
+
+          - id: ca_acceso_red
+            text: "¿Necesitás control de acceso a nivel de red?"
+            hint: "VNET, Private Link, NSG"
+            required: false
+
+      - section: "Integración con Otros Servicios"
+        questions:
+          - id: ca_integracion_azure
+            text: "¿Debe interactuar con otros servicios en Azure?"
+            hint: "Event Hub, Service Bus, Logic Apps"
+            required: false
+
+          - id: ca_monitoreo
+            text: "¿Se requiere integración con herramientas de monitoreo y logging?"
+            hint: "Azure Monitor, Application Insights"
+            required: false
+
+      - section: "Estrategia de Despliegue"
+        questions:
+          - id: ca_cicd
+            text: "¿Cómo se integrará con el flujo de CI/CD y cómo se desplegará?"
+            hint: "GitHub Actions, Azure DevOps, Terraform, Bicep"
+
+          - id: ca_zero_downtime
+            text: "¿Necesitás actualizaciones sin downtime?"
+            hint: "Blue/Green, Canary"
+            required: false
+
+      - section: "Costo"
+        questions:
+          - id: ca_reserva
+            text: "¿Puedo realizar una reserva para ahorrar costos a largo plazo?"
+            required: false
+
+
+  # Azure Container Instances
+  - _id: deep_container_instances
+    type: deep_dive
+    service: "Azure Container Instances"
+    next: result_container_instances
+    sections:
+
+      - section: "Caso de Uso"
+        questions:
+          - id: aci_proposito
+            text: "¿Para qué vas a usar Container Instances?"
+            hint: "Tareas puntuales, batch jobs, pipelines, testing, scripts automatizados"
+
+          - id: aci_duracion
+            text: "¿Cuánto tiempo dura la ejecución del contenedor?"
+            hint: "Segundos, minutos, horas. ¿Se ejecuta una vez o de forma recurrente?"
+
+      - section: "Recursos"
+        questions:
+          - id: aci_recursos
+            text: "¿Cuánta CPU y memoria necesita el contenedor?"
+
+          - id: aci_gpu
+            text: "¿Requiere GPU?"
+            required: false
+
+      - section: "Red y Acceso"
+        questions:
+          - id: aci_acceso
+            text: "¿El contenedor necesita ser accesible desde internet o solo ejecuta tareas internas?"
+
+          - id: aci_vnet
+            text: "¿Necesita integrarse con una VNET?"
+            required: false
+
+      - section: "Persistencia"
+        questions:
+          - id: aci_storage
+            text: "¿El contenedor necesita acceder a almacenamiento persistente?"
+            hint: "Azure Files, Blob Storage"
+            required: false
+
+
+  # ============================================================
+  # RESULTADOS (HANDOFF)
+  # ============================================================
+
+  - _id: result_function_app
+    type: result
+    service: "Azure Function App"
+
+    summary: >
+      Compute serverless event-driven con escalado a cero y facturación
+      por ejecución. Ideal para cargas discontinuas y stateless.
+
+    why_factors:
+      - "carga event-driven"
+      - "procesamiento stateless"
+      - "volumen de tráfico variable o impredecible"
+      - "tiempos de ejecución cortos (menos de 10 minutos)"
+      - "se quiere pagar solo por uso real"
+      - "no hay requerimiento de control sobre el sistema operativo"
+      - "integración nativa con triggers de Azure (Queue, Blob, Event Hub, Timer)"
+
+    key_considerations:
+      - "Tiempo máximo de ejecución: 230s en plan Consumption (ilimitado en Premium/Dedicated)"
+      - "Cold start puede ser un problema — evaluá Premium si necesitás baja latencia"
+      - "Triggers soportados: HTTP, Timer, Queue, Event Hub, Blob, Service Bus"
+      - "Integraciones nativas con Logic Apps, API Management, Event Grid"
+      - "Durable Functions para workflows con estado o coordinación de eventos"
+
+    pricing:
+      model: "consumption"
+      notes: "Primeros 1M requests gratis, luego $0.20/M + $0.000016/GB-s."
+      example_monthly_usd: 15
+      alternatives:
+        - plan: "premium"
+          notes: "Sin cold start, soporte de VNET, desde ~$150/mes."
+        - plan: "dedicated"
+          notes: "Corre sobre un App Service Plan existente."
+
+    docs_url: "https://learn.microsoft.com/azure/azure-functions/"
+
+    handoff:
+      next_agent: "cu-02-cost-estimator"
+      required_inputs:
+        - "expected_requests_per_month"
+        - "avg_execution_time_ms"
+        - "memory_mb"
+        - "trigger_tipo"
+        - "plan"
+      params:
+        service: "azure_functions"
+        pricing_tier: "consumption"
+
+
+  - _id: result_app_services
+    type: result
+    service: "Azure App Services"
+
+    summary: >
+      Runtime gestionado para aplicaciones web tradicionales, con escalado
+      automático, deployment slots y soporte nativo para los stacks más comunes.
+
+    why_factors:
+      - "aplicación web tradicional o API HTTP"
+      - "se quiere un runtime gestionado sin operar contenedores ni VMs"
+      - "stack estándar (.NET, Node.js, Python, Java, PHP, Ruby)"
+      - "necesidad de deployment slots para blue/green o staging"
+      - "escalado automático por métricas (CPU, memoria, custom)"
+      - "integración directa con Azure DevOps o GitHub Actions out-of-the-box"
+
+    key_considerations:
+      - "Soporte nativo para .NET, Node.js, Python, Java, PHP, Ruby"
+      - "Deployment slots para blue/green sin downtime"
+      - "Autoscale basado en CPU, memoria o métricas customizadas"
+      - "Integración con Azure DevOps, GitHub Actions, Bitbucket out-of-the-box"
+      - "Application Gateway y Front Door disponibles para exposición avanzada"
+
+    pricing:
+      model: "tiered"
+      notes: "Desde Free (F1) hasta Premium P3v3. El plan B1 (~$13/mes) es el mínimo productivo."
+      example_monthly_usd: 55
+      alternatives:
+        - plan: "basic"
+          notes: "B1/B2/B3, ideal para dev/test y cargas chicas."
+        - plan: "standard"
+          notes: "S1/S2/S3, con autoscale y slots."
+        - plan: "premium"
+          notes: "P1v3/P2v3/P3v3, mejor performance y VNET integration."
+
+    docs_url: "https://learn.microsoft.com/azure/app-service/"
+
+    handoff:
+      next_agent: "cu-02-cost-estimator"
+      required_inputs:
+        - "tier"
+        - "instance_count"
+        - "apps_lenguaje"
+        - "apps_rps"
+        - "apps_escala"
+      params:
+        service: "app_services"
+        pricing_tier: "standard"
+
+
+  - _id: result_aks
+    type: result
+    service: "Azure Kubernetes Service (AKS)"
+
+    summary: >
+      Kubernetes totalmente gestionado con control plane gratuito, nodepools
+      flexibles y control granular sobre networking, RBAC y workloads.
+
+    why_factors:
+      - "el equipo ya maneja Kubernetes o necesita sus APIs"
+      - "control granular sobre networking y RBAC"
+      - "múltiples tipos de workloads en el mismo cluster"
+      - "necesidad de nodepools heterogéneos (GPU, spot, arm64)"
+      - "integración con GitOps (Flux, ArgoCD)"
+      - "no se requiere el stack comercial de Red Hat (OpenShift)"
+
+    key_considerations:
+      - "Control plane gestionado por Azure (gratis), pagás solo los nodos worker"
+      - "Soporte nativo para GitOps con Flux o ArgoCD"
+      - "Integración con Azure Policy, Microsoft Defender for Containers"
+      - "Nodepools con GPU, spot instances, y arm64 disponibles"
+      - "Requiere expertise operativo en K8s — más carga que Container Apps"
+
+    pricing:
+      model: "pay-as-you-go"
+      notes: "Pagás los VMs de los nodos + storage + networking. Control plane = $0."
+      example_monthly_usd: 280
+      alternatives:
+        - plan: "uptime_sla"
+          notes: "SLA 99.95% del control plane por ~$0.10/hora adicional."
+
+    docs_url: "https://learn.microsoft.com/azure/aks/"
+
+    handoff:
+      next_agent: "cu-02-cost-estimator"
+      required_inputs:
+        - "node_count"
+        - "vm_sku"
+        - "aks_nodepools"
+        - "aks_autoscaling_nodos"
+        - "aks_almacenamiento"
+      params:
+        service: "aks"
+        pricing_tier: "standard"
+
+
+  - _id: result_container_apps
+    type: result
+    service: "Azure Container Apps"
+
+    summary: >
+      Plataforma serverless para contenedores basada en Kubernetes + KEDA + Dapr,
+      sin que tengas que gestionar el cluster. Escala a cero automáticamente.
+
+    why_factors:
+      - "se quiere correr contenedores sin operar Kubernetes"
+      - "microservicios con tráfico variable"
+      - "se quiere escalar a cero en períodos idle"
+      - "no se necesita acceso a la API de Kubernetes"
+      - "se busca un balance entre control y gestión operativa"
+      - "event-driven scaling sobre colas o topics"
+
+    key_considerations:
+      - "Basado en Kubernetes + KEDA + Dapr internamente, totalmente abstraído"
+      - "Escala a cero nativa — ideal para microservicios con tráfico variable"
+      - "Soporte para HTTP scaling y event-driven scaling (queues, topics)"
+      - "Dapr integrado para service discovery, pub/sub y state management"
+      - "Menos control que AKS, pero muchísimo menos overhead operativo"
+
+    pricing:
+      model: "consumption"
+      notes: "Primeros 180,000 vCPU-s y 360,000 GB-s gratis por mes. Luego pay-per-use."
+      example_monthly_usd: 25
+      alternatives:
+        - plan: "dedicated"
+          notes: "Workload profiles con recursos reservados para cargas predecibles."
+
+    docs_url: "https://learn.microsoft.com/azure/container-apps/"
+
+    handoff:
+      next_agent: "cu-02-cost-estimator"
+      required_inputs:
+        - "replicas_min"
+        - "replicas_max"
+        - "cpu_per_replica"
+        - "memory_per_replica_gb"
+        - "ca_trafico"
+      params:
+        service: "container_apps"
+        pricing_tier: "consumption"
+
+
+  - _id: result_openshift
+    type: result
+    service: "Azure Red Hat OpenShift (ARO)"
+
+    summary: >
+      Kubernetes enterprise-grade con soporte certificado Red Hat, operadores OLM
+      y compliance para industrias reguladas. Operado conjuntamente por Red Hat y Microsoft.
+
+    why_factors:
+      - "requerimiento explícito de Red Hat OpenShift Container Platform"
+      - "compliance o certificaciones específicas de industrias reguladas"
+      - "necesidad de soporte enterprise 24/7 conjunto Red Hat + Microsoft"
+      - "uso de operadores certificados del ecosistema OLM"
+      - "pipelines Tekton o GitOps con ArgoCD gestionados"
+      - "workloads en banca, salud o gobierno"
+
+    key_considerations:
+      - "Cluster Kubernetes totalmente gestionado y certificado por Red Hat + Microsoft"
+      - "Soporte 24/7 conjunto Red Hat + Azure incluido en el precio"
+      - "Ideal para banca, salud, gobierno — tiene certificaciones específicas"
+      - "Incluye Red Hat container registry, pipelines Tekton, GitOps con ArgoCD"
+      - "Costo mínimo elevado — no sirve para clusters chicos"
+
+    pricing:
+      model: "reserved_cluster"
+      notes: "Mínimo 3 master nodes + 3 worker nodes. Costo base ~$0.95/hora por cluster."
+      example_monthly_usd: 1900
+
+    docs_url: "https://learn.microsoft.com/azure/openshift/"
+
+    # Sin handoff a CU-02: el pricing de ARO es tan particular (mínimo 3+3 nodos
+    # más licencias Red Hat) que un estimador genérico no da un valor útil.
+    # Mejor linkear a la calculadora oficial desde docs_url.
+    handoff: {}
+
+
+  - _id: result_vm
+    type: result
+    service: "Azure Virtual Machines"
+
+    summary: >
+      Máxima flexibilidad y control sobre el sistema operativo, licencias y hardware.
+      La opción más cercana al modelo on-premise, a costo de mayor gestión operativa.
+
+    why_factors:
+      - "requerimiento de control total sobre el sistema operativo"
+      - "stack legado (C++, EJB, ASP, etc.) que no se puede contenerizar"
+      - "licencias específicas que se quieren traer vía Azure Hybrid Benefit"
+      - "workloads que necesitan GPU o hardware dedicado"
+      - "aplicación empresarial monolítica difícil de refactorizar"
+      - "necesidad de cumplir con requisitos de seguridad a nivel de host"
+
+    key_considerations:
+      - "Familias: General Purpose (Dv5), Compute Optimized (Fsv2), Memory (Ev5), GPU (NCv3/NVv4)"
+      - "Azure Hybrid Benefit para traer licencias Windows/SQL Server existentes"
+      - "Availability Zones para SLA 99.99% en configuración multi-zona"
+      - "Spot VMs para cargas tolerantes a interrupciones con hasta 90% de descuento"
+      - "Mayor carga operativa: parches, backups, monitoreo son tu responsabilidad"
+
+    pricing:
+      model: "pay-as-you-go"
+      notes: "Pay-as-you-go o Reserved (1-3 años con hasta 72% descuento). Depende del SKU."
+      example_monthly_usd: 140
+      alternatives:
+        - plan: "reserved_1y"
+          notes: "Hasta 40% de descuento comprometiéndose 1 año."
+        - plan: "reserved_3y"
+          notes: "Hasta 72% de descuento comprometiéndose 3 años."
+        - plan: "spot"
+          notes: "Hasta 90% de descuento para cargas interrumpibles."
+
+    docs_url: "https://learn.microsoft.com/azure/virtual-machines/"
+
+    handoff:
+      next_agent: "cu-02-cost-estimator"
+      required_inputs:
+        - "vm_sku"
+        - "vm_so"
+        - "vm_disco"
+        - "vm_almacenamiento"
+        - "vm_licencias"
+        - "vm_reservada"
+      params:
+        service: "virtual_machines"
+        pricing_tier: "payg"
+
+
+  - _id: result_container_instances
+    type: result
+    service: "Azure Container Instances"
+
+    summary: >
+      Ejecución aislada de contenedores para tareas puntuales, batch jobs o scripts.
+      Arranque en segundos y facturación por segundo de ejecución.
+
+    why_factors:
+      - "tareas puntuales, batch jobs o scripts automatizados"
+      - "ejecución de corta duración (segundos a horas)"
+      - "no se necesita orquestación continua de múltiples contenedores"
+      - "se quiere pagar solo por el tiempo real de ejecución"
+      - "arranque más rápido que levantar una VM"
+      - "aislamiento entre ejecuciones sin compartir host"
+
+    key_considerations:
+      - "Ideal para tareas de corta duración — no es un servicio de larga vida"
+      - "Sin orquestación — si necesitás múltiples contenedores coordinados, evaluá AKS o Container Apps"
+      - "Arranque en segundos — más rápido que levantar una VM"
+      - "Soporte para Linux y Windows containers"
+      - "Integración con Azure Files para persistencia si se necesita"
+      - "No escala automáticamente — si necesitás escala, Container Apps es mejor opción"
+
+    pricing:
+      model: "per_second"
+      notes: "Facturación por segundo: CPU ($0.0000125/vCPU/s) + memoria ($0.0000013/GB/s). Sin costo en idle."
+      example_monthly_usd: 8
+
+    docs_url: "https://learn.microsoft.com/azure/container-instances/"
+
+    handoff:
+      next_agent: "cu-02-cost-estimator"
+      required_inputs:
+        - "aci_recursos"
+        - "aci_duracion"
+        - "executions_per_month"
+      params:
+        service: "container_instances"
+        pricing_tier: "per_second"
