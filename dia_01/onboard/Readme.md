@@ -3,7 +3,7 @@
 ## Credenciales
 
 ```bash
-cp .env.example .env
+cp example.txt .env
 ```
 
 En `.env` y reeplazar valores:

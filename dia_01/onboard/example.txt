@@ -1,0 +1,11 @@
+# watsonx.ai
+WX_API_KEY=
+WX_PROJECT_ID=
+WX_URL=https://us-south.ml.cloud.ibm.com
+
+# Elasticsearch
+ES_URL=
+ES_USER=
+ES_PASSWORD=
+ES_INDEX=
+ES_CA_CERT=certs/ca.crt
