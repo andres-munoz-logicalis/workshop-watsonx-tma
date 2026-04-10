@@ -207,6 +207,12 @@ IBM Cloud Account
     ├── Instancia: Elasticsearch
     └── Instancia: Watsonx Orchestrate
 
+Dentro de watsonx.Orchestrate:
+    └── Workspace
+        ├── Agentes
+        ├── Tools
+        └── Knowledge
+
 Dentro de watsonx.ai:
     └── Proyecto
         ├── Modelos
@@ -246,6 +252,16 @@ El SDK de watsonx en Python maneja el refresh del token automáticamente. Solo n
 
 
 ## Onboarding: servicios del workshop
+
+### Watsonx Orchestrate
+
+Tour por la interfaz:
+- Panel de agentes y catálogo de herramientas
+- Abrir un agente existente y leer su definición YAML
+- Ver cómo están declaradas las tools y la knowledge base
+- Interactuar con el agente desde el chat integrado
+
+La integración vía código y el ADK se desarrollan en el Día 2.
 
 ### watsonx.ai
 
@@ -287,28 +303,8 @@ El índice `workshop_docs` tiene esta estructura:
 
 Verificar con el script `03_elasticsearch.py`.
 
-### watsonx.data + Milvus
-
-Tour por la interfaz de watsonx.data:
-- Catálogo de datos, motores, conexiones
-- Estructura de una colección Milvus: base de datos → colección → campos incluyendo el campo vector
-- Diferencia entre una colección Milvus y un índice Elasticsearch
-
-El uso completo es el Día 3.
-
-### Watsonx Orchestrate
-
-Tour por la interfaz:
-- Panel de agentes y catálogo de herramientas
-- Abrir un agente existente y leer su definición YAML
-- Ver cómo están declaradas las tools y la knowledge base
-- Interactuar con el agente desde el chat integrado
-
-La integración vía código y el ADK se desarrollan en el Día 2.
-
 
 ## DIA 2
-
 
 ## Watsonx Orchestrate: orquestación de agentes
 
@@ -383,18 +379,11 @@ knowledge_base:
     description: Procedimientos y resoluciones previas
 ```
 
-### Práctica del Día 2
-
-1. Registrar los agentes construidos en los días anteriores en el catálogo
-2. Definir el agente orquestador que los coordina via YAML
-3. Probar el flujo completo desde el canal de chat
-4. Cambiar el modelo subyacente de un agente desde el ADK
-
 
 ## DIA 3
 
 
-## Base de conocimiento: RAG con Elasticsearch y Milvus
+## Base de conocimiento: RAG con Elasticsearch
 
 ### El problema que resuelve una base de conocimiento
 
@@ -442,7 +431,7 @@ Parámetros típicos de producción: chunks de 256-512 tokens con overlap de 50-
 score_final = α × score_bm25 + (1-α) × score_vectorial
 ```
 
-### Milvus en el contexto de RAG
+### Milvus en el contexto de RAG (Fuera del scope del workshop)
 
 | Criterio | Elasticsearch | Milvus |
 |---|---|---|
