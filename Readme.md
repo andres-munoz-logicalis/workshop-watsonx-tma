@@ -75,7 +75,10 @@
 
 ### 9:30 - 10:00 | Governance
 
-### 10:00 - 11:00 | Base de conocimiento (teoria y hands on): Elasticsearch + Milvus / watsonx.data
+### 10:00 - 11:00 | Base de conocimientos con Elasticsearch 
+- Teoria y repaso de capacidades Elastic, Enterpise search, Kibana, base de conocimiento, RAG [30 min]
+- Hands on ejercicios [30 min]
+
 
 ### 11:00 - 11:30 | Recap ecosistema y buenas prácticas
 
