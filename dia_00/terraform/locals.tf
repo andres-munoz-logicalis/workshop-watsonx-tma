@@ -66,14 +66,4 @@ locals {
     "ent_search.listen_port"                  = "3002"
   }
 
-  python_app_env = {
-    "ELASTIC_HOST"     = "https://${local.es_host}:${local.es_port}"
-    "ELASTIC_USERNAME" = var.es_username_created_01
-    "ELASTIC_PASSWORD" = var.es_password_created_01
-    "ELASTIC_INDEX"    = var.es_python_app_index
-    "PROJECT_ID"       = var.watsonx_project_id
-    "API_KEY"          = var.ibmcloud_api_key
-    "API_URL"          = "https://us-south.ml.cloud.ibm.com"
-    "FORCE_RESTART"    = "20"
-  }
 }

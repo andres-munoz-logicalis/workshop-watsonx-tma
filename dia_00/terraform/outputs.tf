@@ -81,10 +81,3 @@ output "azure_pricing_endpoint" {
   description = "URL pública de la API Azure Pricing"
   value       = ibm_code_engine_app.api_azure_pricing.endpoint
 }
-
-/*
-output "python_app_endpoint" {
-  description = "URL pública del Python Bot"
-  value       = ibm_code_engine_app.python_app.endpoint
-}
-*/

@@ -7,5 +7,5 @@ module "container_registry" {
 
   images_per_repo = 3
 
-  tags = var.tags
+  resource_tags = var.tags
 }
