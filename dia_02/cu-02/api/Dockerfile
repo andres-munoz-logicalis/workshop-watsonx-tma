@@ -4,8 +4,10 @@ RUN useradd -m appuser
 USER appuser
 WORKDIR /home/appuser/app
 
+ENV PATH="/home/appuser/.local/bin:${PATH}"
+
 COPY --chown=appuser:appuser requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --user -r requirements.txt
 
 COPY --chown=appuser:appuser main.py .
 
