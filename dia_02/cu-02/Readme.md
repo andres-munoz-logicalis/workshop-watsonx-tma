@@ -1,4 +1,23 @@
 
+## Pruebas como texto plano
+
+### Test 1 - Mensaje como texto completo
+```txt
+Quiero cotizar una Azure Function que recibe 5 millones de requests al mes, cada uno tarda 300ms, con 256MB de memoria en eastus
+```
+
+### Test 2 - Mensaje como texto incompleto
+```txt
+Cuánto me sale una Azure Function para procesar eventos HTTP
+```
+
+### Test 3 - Mensaje servicio no soportado
+```txt
+Quiero cotizar una VM de Azure
+```
+
+## Pruebas como JSON output Agente 1
+
 ### Test 1 - Request perfecta
 ``` bash
 {
