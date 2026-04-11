@@ -1,11 +1,11 @@
 # watsonx.ai
 WX_API_KEY=
-WX_PROJECT_ID=
+WX_PROJECT_ID=8cef60a9-ae1a-4d15-9331-bce4ee89e6bb
 WX_URL=https://us-south.ml.cloud.ibm.com
 
 # Elasticsearch
-ES_URL=
+ES_URL=https://99c40cdb-d194-400e-8874-4808820bfd24.c13paqsd05a0ept695ng.databases.appdomain.cloud:30569
 ES_USER=
 ES_PASSWORD=
-ES_INDEX=
+ES_INDEX=workshop_docs
 ES_CA_CERT=certs/ca.crt
