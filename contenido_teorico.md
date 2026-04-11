@@ -477,6 +477,91 @@ knowledge_base:
 
 ## 5. Base de conocimiento: RAG con Elasticsearch
 
+### El ecosistema Elastic: qué es cada cosa
+
+Antes de meternos en cómo se usa Elasticsearch para RAG, conviene entender qué es cada pieza del ecosistema Elastic y por qué existe. Muchos devs conocen Elastic solo por el stack ELK (logs), pero hay más cosas en juego.
+
+#### Elasticsearch
+
+Es el **motor de búsqueda y almacenamiento** que está en el corazón de todo. No es una base de datos relacional ni un data warehouse: es un motor optimizado para **indexar texto y recuperarlo rápido** a partir de queries.
+
+Internamente funciona con un *inverted index* (como el índice al final de un libro: de cada palabra, qué documentos la contienen). A eso se le sumaron, en versiones recientes, capacidades de búsqueda vectorial (`dense_vector`) para habilitar búsqueda semántica además de la clásica léxica.
+
+Qué guarda: documentos JSON organizados en **índices** (equivalente aproximado a una tabla). Cada documento tiene campos con tipos (`text`, `keyword`, `date`, `dense_vector`, etc.). La estructura se define en el **mapping** del índice.
+
+Cómo se consulta: vía API REST con un DSL propio en JSON. Hay clientes oficiales en Python, Java, JS, etc.
+
+Para qué se usa en la industria:
+- **Búsqueda en productos** (e-commerce, catálogos, wikis internos)
+- **Observabilidad** (logs, métricas, traces — el famoso stack ELK)
+- **Analytics sobre texto** (sentiment, clustering, detección de anomalías)
+- **Bases de conocimiento para RAG** (lo que nos interesa en el workshop)
+
+#### Kibana
+
+Es la **interfaz gráfica oficial** para Elasticsearch. No tiene lógica propia: todo lo que hace Kibana termina siendo una llamada REST al cluster de Elastic. Es la capa de presentación.
+
+Qué vas a usar de Kibana:
+- **Dev Tools → Console:** un editor interactivo para mandar queries al cluster. Es la forma más rápida de explorar un índice, probar un mapping o debuggear una búsqueda que no devuelve lo que esperabas.
+- **Discover:** vista tabular de los documentos de un índice, con filtros. Útil para "ver qué hay" en el índice sin escribir una query.
+- **Index Management:** gestión visual de los índices, sus mappings y su tamaño.
+
+Qué **no** vamos a ver hoy pero vale saber que existe:
+- **Dashboards y visualizaciones:** la razón por la que mucha gente conoce Kibana (gráficos sobre logs, métricas, etc.)
+
+Muchos devs cuando hacen llamados a la API mientraas crear un índice para RAG, abren Kibana en paralelo para ahorra tiempo: cada vez que algo no devuelve lo esperado, se puede usar las Dev Tools y ver el mapping o correr la misma query a mano antes de tocar código.
+
+#### Enterprise Search
+
+Es una **capa más alta** construida sobre Elasticsearch. Hasta acá, Elasticsearch te da el motor crudo: vos definís mappings, escribís queries en su DSL, armás tu pipeline de ingesta. Enterprise Search resuelve ese "work-around" con componentes listos para usar:
+
+- **Connectors:** conectores pre-armados para fuentes típicas (SharePoint, Confluence, Google Drive, Jira, S3, bases de datos). Se configuran y sincronizan automáticamente, sin escribir código de ingesta.
+- **Web Crawler:** crawler configurable para indexar sitios web completos sin armar un scraper propio.
+- **Search UI / Search Applications:** librería de componentes frontend y un backend de configuración para montar una experiencia de búsqueda (con facets, filtros, highlighting) sin escribir todo el frontend.
+- **Relevance tuning sin código:** pesos por campo, sinónimos, boosts, desde una interfaz visual.
+
+Pensalo así: **Elasticsearch es el motor, Enterprise Search es el auto completado**. Si tu caso de uso entra en los connectors/patrones que Enterprise Search ya resuelve, vas a llegar mucho más rápido que armando todo a mano. Si tu caso es custom (como un pipeline RAG muy específico), probablemente termines yendo directo contra la API de Elasticsearch.
+
+**Elejercicio 03 del oboard va directo contra Elasticsearch**, no contra Enterprise Search. Es importante que conozcan la diferencia porque en proyectos reales muchas veces la primera pregunta es *"¿esto lo resolvemos con Enterprise Search o picando codigo contra Elastic?"*.
+
+#### Review herramientas
+
+┌──────────────────────────────────┐
+│      Kibana (UI)                 │
+│  Dev Tools, Discover, Dashboards │
+└───────────────┬──────────────────┘
+                │ API REST
+┌───────────────▼──────────────────┐
+│      Elasticsearch               │
+│  (motor de búsqueda + storage)   │
+│                                  │
+│  - Inverted index (BM25)         │
+│  - Dense vectors (kNN)           │
+│  - Mappings, queries DSL         │
+└───────────────▲──────────────────┘
+                │
+┌───────────────┴──────────────────┐
+│    Enterprise Search             │
+│  Connectors, crawler, Search UI  │
+│  (abstracción sobre Elastic)     │
+└──────────────────────────────────┘
+
+Kibana le habla a Elasticsearch para mostrarte cosas. Enterprise Search le habla a Elasticsearch para ingestar datos y servir búsquedas. Abajo de todo, siempre está el mismo motor.
+
+#### Cuándo usar qué
+
+| Necesidad | Herramienta |
+|---|---|
+| Explorar datos, debuggear queries, ver mappings | Kibana (Dev Tools / Discover) |
+| Ingestar documentos desde un sistema típico (Confluence, SharePoint, Drive) | Enterprise Search (Connectors) |
+| Indexar un sitio web público | Enterprise Search (Web Crawler) |
+| Montar una UI de búsqueda con filtros y facets rápido | Enterprise Search (Search UI) |
+| Pipeline custom, control total del mapping y la query | Elasticsearch directo (API / SDK) |
+| RAG con pipeline custom y control fino del mapping | Elasticsearch directo (API / SDK) |
+| RAG con fuentes estándar y setup rápido | Enterprise Search + connectors |
+
+En el hands-on de hoy vamos a usar la interfaz de Kibana y los connectors de Enterprise Search para montar una base de conocimiento sin código. Esto te da una visión rápida de lo que el ecosistema Elastic resuelve out-of-the-box. En proyectos reales donde necesites control fino del pipeline (chunking custom, embeddings propios, queries híbridas afinadas), vas a terminar yendo contra la API de Elasticsearch directamente
+
 ### El problema que resuelve
 
 Los LLMs tienen dos limitaciones para uso empresarial:
@@ -604,6 +689,11 @@ Para la mayoría de los casos empresariales, **Elasticsearch híbrido alcanza**.
 | **Tool calling** | Capacidad del modelo de invocar funciones externas. |
 | **top-k** | Cantidad de chunks recuperados de la base vectorial por query. |
 | **top_p** | Parámetro de sampling complementario a la temperatura. |
+| **Enterprise Search** | Capa sobre Elasticsearch con connectors, crawler y Search UI listos para usar. |
+| **ELK stack** | Elasticsearch + Logstash + Kibana. El uso "clásico" de Elastic para observabilidad. |
+| **Inverted index** | Estructura de índice que mapea palabras → documentos que las contienen. Base de BM25. |
+| **Kibana** | Interfaz gráfica oficial sobre Elasticsearch. No tiene lógica propia, solo llama a su API. |
+| **Mapping** | Definición de los campos y tipos de un índice en Elasticsearch (como un schema). |
 
 ---
 
