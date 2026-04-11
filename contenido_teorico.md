@@ -627,5 +627,6 @@ Para la mayoría de los casos empresariales, **Elasticsearch híbrido alcanza**.
 ## Anexo C — Lecturas recomendadas
 
 - **Prompt engineering techniques** - OReilly - `Solicitar copia`
+- **AI Engineering** - OReilly - `Solicitar copia`
 - **Agentic Design Patterns** - Springer - `Solicitar copia`
 - **Building AI and LLM Applications** - OReilly - `Solicitar copia`
