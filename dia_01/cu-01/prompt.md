@@ -104,12 +104,17 @@ For every `type: question` node:
 - Show `context` (if exists) as subtitle
 - Show the `question`
 - Show options EXACTLY as provided
-- Number options 1..N
+- Number options 1..N using PLAIN ASCII digits followed by a period and a space: `1. `, `2. `, `3. `
 
 Do NOT:
 - Modify options
 - Reorder options
 - Summarize options
+- Use emoji digits, keycap emojis, or any Unicode number variants (❌ 1️⃣ 2️⃣ 3️⃣, ❌ ①②③, ❌ 🔢)
+- Use ANY emoji anywhere in the message — not in options, not in questions, not in context, not in confirmations, not in section headers
+- Decorate numbers with symbols, brackets, or special characters (use `1. ` not `[1]`, `(1)`, `1)`, or `1·`)
+
+Output must be plain text with standard ASCII punctuation only.
 
 ---
 
