@@ -132,7 +132,7 @@ Si el tutor no te las dio precargadas:
 2. Navegá al **Resource Group** del workshop → instancia de **watsonx.ai**
 3. Abrí la instancia, andá a **Manage → Access (IAM) → API keys**
 4. Crear API key. **Copiala y guardala** — no se puede ver de nuevo.
-5. El `WX_PROJECT_ID` lo encontrás en watsonx.ai → tu proyecto → **Manage → General**
+5. El `WX_PROJECT_ID` (podes perdirselo al profe) o (crearlo y extraer el id en watsonx.ai → tu proyecto → **Manage → General**)
 6. Pegá ambos valores en tu `.env`
 
 ---

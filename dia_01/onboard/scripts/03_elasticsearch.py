@@ -19,7 +19,7 @@ def main():
     print("Ejercicio 03 — Elasticsearch: Conexión y primera búsqueda")
     print("=" * 60)
 
-    # ----- 1. Credenciales -----
+    #  1. Credenciales
     print("\n[1/6] Cargando credenciales...")
 
     dotenv_path = find_dotenv(usecwd=True)
@@ -39,10 +39,10 @@ def main():
         print(f"No encuentro el cert en {ES_CA_CERT}")
         sys.exit(1)
 
-    print("      Credenciales OK")
-    print(f"      Cert: {ES_CA_CERT}")
+    print("Credenciales OK")
+    print(f"Cert: {ES_CA_CERT}")
 
-    # ----- 2. Conectar al cluster -----
+    # 2. Conectar al cluster
     print("\n[2/6] Conectando al cluster...")
     # Usamos ca_certs apuntando al certificado del cluster
     # (montado en /app/certs dentro del contenedor)
@@ -59,7 +59,7 @@ def main():
         print("No se pudo conectar. Verificá ES_URL, credenciales y cert.")
         sys.exit(1)
 
-    # ----- 3. Info del cluster -----
+    # 3. Info del cluster
     print("\n[3/6] Info del cluster...")
     info = es.info()
     print(f"      Cluster: {info['cluster_name']}")
@@ -70,8 +70,8 @@ def main():
     mappings = es.indices.get_mapping(index=ES_INDEX)
     props = mappings[ES_INDEX]["mappings"].get("properties", {})
 
-    print(f"      Campos del índice \"{ES_INDEX}\":")
-    print("      " + "-" * 40)
+    print(f"Campos del índice \"{ES_INDEX}\":")
+    print("   " + "-" * 40)
     for campo, config in props.items():
         tipo = config.get("type", "object")
         dims = config.get("dims", "")
@@ -79,9 +79,9 @@ def main():
         print(f"        {campo:<20} {tipo}{dims_str}")
 
     count = es.count(index=ES_INDEX)["count"]
-    print(f"\n      Documentos indexados: {count}")
+    print(f"\n Documentos indexados: {count}")
 
-    # ----- 5. Documento de ejemplo -----
+    # 5. Documento de ejemplo
     print("\n[5/6] Documento de ejemplo...")
     resultado = es.search(index=ES_INDEX, body={"query": {"match_all": {}}, "size": 1})
     doc = resultado["hits"]["hits"][0]
@@ -93,7 +93,7 @@ def main():
             val = str(v)[:100] + "..." if len(str(v)) > 100 else str(v)
             print(f"        {k}: {val}")
 
-    # ----- 6. Búsqueda por keyword (BM25) -----
+    # 6. Búsqueda por keyword (BM25)
     print("\n[6/6] Búsqueda por keyword (BM25)...")
     query_texto = "error de autenticación"
 
