@@ -60,6 +60,19 @@
 
 **Objetivo:** explorar en Kibana un índice ya poblado con papers de arXiv sobre IA para entender cómo se ve la data indexada con ELSER antes de consumirla desde Orchestrate.
 
+Arquitectura simple (actual):
+PDF
+ ↓
+pypdf (page-based)
+ ↓
+ELSER ingest pipeline
+ ↓
+Elasticsearch (sparse_vector)
+ ↓
+query simple
+ ↓
+IBM Orchestrate agent
+
 Este índice se llama **`kb-ai-docs`** y ya está listo corriendo un script Python que extrae texto de los PDFs, los parte en páginas y los indexa a través de un ingest pipeline con ELSER. Si te interesa ver cómo, está el Extra 1 al final. Los pdf se extrajero de [arxiv](https://arxiv.org/list/cs.AI/recent)
 
 1. En Kibana, andá a **Search → Content → Indices**.
@@ -193,7 +206,37 @@ Mirar el script que usó el instructor para poblar `kb-ai-docs` y crear tu propi
 
 Modifica y personaliza los promts (se recomienda hacerlos en ingles), agrega reglas de presentacion e intenta mejorar las reglas que se imponen.
 
-## Extra 3 — Comparar estrategias de búsqueda en Dev Tools
+# Extra 3 - Mejorar la metodologia de ingesta de PDFs
+
+Mejorar la forma en la cual se indexan los pdfs dentro de elasticsearch (aproach productivo)
+
+PDF
+ ↓
+unstructured (mejor parsing)
+ ↓
+chunking (500 tokens + overlap)
+ ↓
+Python indexer (bulk)
+ ↓
+ELSER ingest pipeline (igual que ahora)
+ ↓
+Elasticsearch (sparse_vector + metadata)
+ ↓
+Hybrid search (BM25 + text_expansion)
+ ↓
+IBM Orchestrate agent
+ ↓
+LLM (RAG)
+
+Para ir tener un pipeline simil a un entorno productivo vas a necesitar:
+- Reemplazar pypdf por unstructured
+- Agregar chunking por texto en vez de por pagina de 300 a 800 tokens con un 10%-20% de overlap
+- Implementar indexado por bulk
+- Mejorar  el mapping
+- Aplicar queries hibridas sobre elasticsearch en orquestrate
+
+
+## Extra 4 — Comparar estrategias de búsqueda en Dev Tools
 
 Corré estas tres queries sobre `kb-ai-docs` en **Kibana → Dev Tools** y compará los top-5.
 
@@ -243,7 +286,7 @@ GET kb-ai-docs/_search
 
 **Reto:** encontrá una pregunta donde BM25 gane claramente (términos exactos, siglas) y otra donde ELSER gane (sinónimos, paráfrasis). Anotá cuál elegirías para este dataset.
 
-## Extra 4 — Mini golden set de evaluación
+## Extra 5 — Mini golden set de evaluación
 
 Armá 5 preguntas con respuesta conocidas viendo los pdf o la web que crawleaste, corrélas contra el agente y anotá cuántas respondió bien, cuántas alucinó y cuántas citó mal la fuente. Es el mínimo viable de evaluación de RAG que vimos en teoría.
 
