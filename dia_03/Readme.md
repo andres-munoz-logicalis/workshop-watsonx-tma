@@ -183,7 +183,15 @@ Desde el chat de Orchestrate, hacé al menos 4 preguntas y anotá los resultados
 
 Para quienes terminen antes. Se pueden hacer durante el almuerzo o la tarde.
 
-## Extra 1 — Indexar tus propios PDFs con Python
+## Extra 1 — Evaluación
+
+Armá 5 preguntas con respuesta conocidas viendo los pdf o la web que crawleaste, corrélas contra el agente y anotá cuántas respondió bien, cuántas alucinó y cuántas citó mal la fuente. Es el mínimo viable de evaluación de RAG que vimos en teoría.
+
+## Extra 2 - Uso de integración 'Upload'
+
+En este ejercicio se propone crear un nuevo indice que contenga PDFs seleccionados por cada grupo. Para ello se utilizará la integración 'Upload' que te permite subir mediante un drag and drop tus PDFs y crear un indice con ellos.
+
+## Extra 3 — Indexar tus propios PDFs con Python
 
 Mirar el script que usó el instructor para poblar `kb-ai-docs` y crear tu propio índice.
 
@@ -202,11 +210,11 @@ Mirar el script que usó el instructor para poblar `kb-ai-docs` y crear tu propi
 4. Verificá en Kibana que tu nuevo índice tenga los docs.
 5. Conectalo a Orchestrate como una segunda KB y armá un segundo agente. Ahora tenés dos agentes sobre dos dominios distintos — perfecto para experimentar con orquestación.
 
-## Extra 2 - Modificar el prompt
+## Extra 4 - Modificar el prompt
 
 Modifica y personaliza los promts (se recomienda hacerlos en ingles), agrega reglas de presentacion e intenta mejorar las reglas que se imponen.
 
-# Extra 3 - Mejorar la metodologia de ingesta de PDFs
+## Extra 5 - Mejorar la metodologia de ingesta de PDFs
 
 Mejorar la forma en la cual se indexan los pdfs dentro de elasticsearch (aproach productivo)
 
@@ -236,7 +244,7 @@ Para ir tener un pipeline simil a un entorno productivo vas a necesitar:
 - Aplicar queries hibridas sobre elasticsearch en orquestrate
 
 
-## Extra 4 — Comparar estrategias de búsqueda en Dev Tools
+## Extra 6 — Comparar estrategias de búsqueda en Dev Tools
 
 Corré estas tres queries sobre `kb-ai-docs` en **Kibana → Dev Tools** y compará los top-5.
 
@@ -285,10 +293,6 @@ GET kb-ai-docs/_search
 ```
 
 **Reto:** encontrá una pregunta donde BM25 gane claramente (términos exactos, siglas) y otra donde ELSER gane (sinónimos, paráfrasis). Anotá cuál elegirías para este dataset.
-
-## Extra 5 — Mini golden set de evaluación
-
-Armá 5 preguntas con respuesta conocidas viendo los pdf o la web que crawleaste, corrélas contra el agente y anotá cuántas respondió bien, cuántas alucinó y cuántas citó mal la fuente. Es el mínimo viable de evaluación de RAG que vimos en teoría.
 
 ---
 
