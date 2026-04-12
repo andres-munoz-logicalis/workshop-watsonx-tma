@@ -94,4 +94,10 @@
 
 ### 13:00 - 14:00 | Almuerzo
 
-### 14:00 en adelante | Consultas extra y review de conceptos para los grupos (opcional)
+### 14:00 en adelante | Espacio opcional para review
+
+- Revisión de conceptos y uso de la herramienta
+- Posibilidad de terminar agentes del dia 1 y 2
+- Mejora del flujo agentico
+- Revisión de agentes ya desarrollados
+- Revisión ejercicios RAG
