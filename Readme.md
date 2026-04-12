@@ -21,7 +21,7 @@
 - IBM Cloud -> Resource Groups -> Instancias de servicio -> Proyectos
 - Watsonx como SaaS: no se instala, se consume vía API
 - IAM: cómo funcionan las API keys y los roles
-- Terraform: Como se levantó este entorno, así lo replican
+- Terraform: Como se levantó este entorno
 
 ### 10:30 - 11:00 | Onboarding Watsonx suite IBM
 
@@ -79,14 +79,13 @@
 - Teoria y repaso de capacidades Elastic, Enterpise search, Kibana, base de conocimiento, RAG [30 min]
 - Hands on ejercicios [30 min]
 
-
 ### 11:00 - 11:30 | Recap ecosistema y buenas prácticas
 
 - Cada participante comparte qué construyó y qué se lleva
 - Mapa del ecosistema completo: cómo conectan todos los servicios vistos
 - Buenas prácticas: prompting en producción, gestión de contexto, patrones de orquestación
 
-### 12:00 - 13:00 | Cierre
+### 12:00 - 12:30 | Cierre
 
 - Consultas abiertas
 - Próximos pasos dentro del roadmap de adopción
@@ -101,3 +100,4 @@
 - Mejora del flujo agentico
 - Revisión de agentes ya desarrollados
 - Revisión ejercicios RAG
+- Deep dive arquitectura e IaC usada
