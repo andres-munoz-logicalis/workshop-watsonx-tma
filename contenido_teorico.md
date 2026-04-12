@@ -526,25 +526,25 @@ Pensalo así: **Elasticsearch es el motor, Enterprise Search es el auto completa
 
 #### Review herramientas
 
-┌──────────────────────────────────┐
-│      Kibana (UI)                 │
-│  Dev Tools, Discover, Dashboards │
-└───────────────┬──────────────────┘
-                │ API REST
-┌───────────────▼──────────────────┐
-│      Elasticsearch               │
-│  (motor de búsqueda + storage)   │
-│                                  │
-│  - Inverted index (BM25)         │
-│  - Dense vectors (kNN)           │
-│  - Mappings, queries DSL         │
-└───────────────▲──────────────────┘
-                │
-┌───────────────┴──────────────────┐
-│    Enterprise Search             │
-│  Connectors, crawler, Search UI  │
-│  (abstracción sobre Elastic)     │
-└──────────────────────────────────┘
+                ┌──────────────────────────────────┐
+                │      Kibana (UI)                 │
+                │  Dev Tools, Discover, Dashboards │
+                └───────────────┬──────────────────┘
+                                │ API REST
+                ┌───────────────▼──────────────────┐
+                │      Elasticsearch               │
+                │  (motor de búsqueda + storage)   │
+                │                                  │
+                │  - Inverted index (BM25)         │
+                │  - Dense vectors (kNN)           │
+                │  - Mappings, queries DSL         │
+                └───────────────▲──────────────────┘
+                                │
+                ┌───────────────┴──────────────────┐
+                │    Enterprise Search             │
+                │  Connectors, crawler, Search UI  │
+                │  (abstracción sobre Elastic)     │
+                └──────────────────────────────────┘
 
 Kibana le habla a Elasticsearch para mostrarte cosas. Enterprise Search le habla a Elasticsearch para ingestar datos y servir búsquedas. Abajo de todo, siempre está el mismo motor.
 
