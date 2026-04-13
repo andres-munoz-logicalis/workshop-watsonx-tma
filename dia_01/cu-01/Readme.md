@@ -52,7 +52,7 @@ Pueden utilizar:
 - Bases de datos
 - Middleware
 
-** Importante: La arquitectura es libre, aunque se recomienda adaptar la solución a las habilidades del equipo.**
+**Importante: La arquitectura es libre, aunque se recomienda adaptar la solución a las habilidades del equipo.**
 
 ## Requisito de Despliegue (Obligatorio si hay código)
 
