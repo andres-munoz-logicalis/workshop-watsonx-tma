@@ -489,6 +489,41 @@ Internamente funciona con un *inverted index* (como el índice al final de un li
 
 Qué guarda: documentos JSON organizados en **índices** (equivalente aproximado a una tabla). Cada documento tiene campos con tipos (`text`, `keyword`, `date`, `dense_vector`, etc.). La estructura se define en el **mapping** del índice.
 
+#### Dense vectors vs Sparse vectors
+
+Cuando hablamos de búsqueda en Elasticsearch para RAG, aparecen dos formas de representar texto como vectores: **dense** y **sparse**. Entender la diferencia es clave para elegir bien la estrategia de retrieval.
+
+##### Dense vectors (vectores densos)
+
+Un `dense_vector` es un vector de números de tamaño fijo (ej: 384, 768, 1536 dimensiones) generado por un modelo de embeddings.
+
+Ejemplo simplificado:
+- "El gato duerme en el sillón" → [0.12, -0.98, 0.44, ..., 0.07]
+
+Características:
+
+- Representan el **significado semántico** del texto
+- Dos textos con palabras distintas pero mismo significado → vectores similares
+- Se usan con búsqueda **kNN (k-nearest neighbors)**
+
+Ejemplo:
+
+- "auto" ≈ "coche"
+- "error al compilar" ≈ "falla en build"
+
+Esto es lo que habilita la búsqueda semántica en RAG.
+
+---
+
+##### Sparse vectors (vectores dispersos)
+
+Un `sparse vector` representa texto como un conjunto de términos con pesos, donde la mayoría de las dimensiones son cero.
+
+Es una extensión del modelo clásico de IR (Information Retrieval), como **BM25** o variantes más modernas.
+
+Ejemplo conceptual:
+- "error al compilar código" → {"error": 2.1,"compilar": 1.7,"código": 1.3}
+
 Cómo se consulta: vía API REST con un DSL propio en JSON. Hay clientes oficiales en Python, Java, JS, etc.
 
 Para qué se usa en la industria:
@@ -496,6 +531,92 @@ Para qué se usa en la industria:
 - **Observabilidad** (logs, métricas, traces — el famoso stack ELK)
 - **Analytics sobre texto** (sentiment, clustering, detección de anomalías)
 - **Bases de conocimiento para RAG** (lo que nos interesa en el workshop)
+
+Características:
+
+- Basados en **términos exactos del texto**
+- Muy buenos para:
+  - nombres propios
+  - códigos de error (`ERR_504`)
+  - términos técnicos específicos
+- No capturan semántica profunda (no entienden sinónimos por defecto)
+
+En Elasticsearch, esto aparece como:
+- BM25 clásico (inverted index)
+- Modelos como ELSER (sparse semántico aprendido)
+
+---
+
+##### Diferencias clave
+
+| Aspecto | Dense vector | Sparse vector |
+|---|---|---|
+| Representación | Lista densa de floats | Diccionario de términos con pesos |
+| Captura semántica | ✅ Alta | ⚠️ Limitada (mejora con modelos como ELSER) |
+| Coincidencia exacta | ❌ Peor | ✅ Excelente |
+| Interpretabilidad | ❌ Difícil | ✅ Más interpretable |
+| Casos fuertes | Lenguaje natural | Queries técnicas / exactas |
+
+---
+
+##### ¿Cuándo usar cada uno?
+
+**Usar dense vectors cuando:**
+
+- El usuario pregunta en lenguaje natural
+- Hay muchas formas distintas de decir lo mismo
+- Querés recall alto (no perder resultados relevantes)
+
+Ejemplos:
+- "¿Cómo hago login?" vs "problemas de autenticación"
+- FAQs, documentación, soporte
+
+---
+
+**Usar sparse vectors (o BM25) cuando:**
+
+- Importa la coincidencia exacta de términos
+- Hay identificadores únicos o técnicos
+
+Ejemplos:
+- "NullPointerException"
+- "error 403"
+- nombres de funciones, endpoints, tablas
+
+---
+
+##### La práctica real: búsqueda híbrida
+
+En sistemas RAG productivos, casi nunca elegís uno solo.
+
+Se combinan:
+
+- **BM25 / sparse → precisión léxica**
+- **Dense vectors → semántica**
+- score_final = α × score_sparse + (1-α) × score_dense
+
+Esto evita:
+
+- falsos positivos del embedding
+- pérdida de resultados por no matchear palabras exactas
+
+Regla práctica:  
+**empezá siempre con híbrido y ajustá después con evaluación.**
+
+---
+
+##### Insight importante
+
+Un error común es pensar:
+
+> "dense vector reemplaza a BM25"
+
+No es así.
+
+- Dense mejora **recall semántico**
+- Sparse asegura **precisión léxica**
+
+En RAG, necesitás ambas para que el LLM reciba contexto correcto.
 
 #### Kibana
 
